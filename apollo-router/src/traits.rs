@@ -16,7 +16,12 @@ pub trait CacheResolver<K, V> {
 ///
 /// This type consists of a query string, an optional operation string and the
 /// [`QueryPlanOptions`].
-pub(crate) type QueryKey = (String, Option<String>, QueryPlanOptions);
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub(crate) struct QueryKey {
+    pub(crate) query: String,
+    pub(crate) operation: Option<String>,
+    pub(crate) options: QueryPlanOptions,
+}
 
 /// QueryPlanner can be used to plan queries.
 ///
@@ -33,22 +38,6 @@ pub trait QueryPlanner: Send + Sync + Debug {
         options: QueryPlanOptions,
     ) -> Result<Arc<QueryPlan>, QueryPlannerError>;
 }
-
-/// With caching trait.
-///
-/// Adds with_caching to any query planner.
-pub trait WithCaching: QueryPlanner
-where
-    Self: Sized + QueryPlanner + 'static,
-{
-    /// Wrap this query planner in a caching decorator.
-    /// The original query planner is consumed.
-    fn with_caching(self, plan_cache_limit: usize) -> CachingQueryPlanner<Self> {
-        CachingQueryPlanner::new(self, plan_cache_limit)
-    }
-}
-
-impl<T: ?Sized> WithCaching for T where T: QueryPlanner + Sized + 'static {}
 
 #[cfg(test)]
 mod tests {
