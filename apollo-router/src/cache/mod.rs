@@ -9,6 +9,9 @@ use std::hash::Hash;
 use std::sync::Arc;
 use tokio::sync::broadcast::{self, Sender};
 use tokio::sync::oneshot;
+use tower::BoxError;
+
+pub mod redis;
 
 /// A caching map optimised for slow value resolution.
 ///
