@@ -217,7 +217,7 @@ commands:
       - restore_cache:
           name: Restore .cargo
           keys:
-            - rust-cargo-<< pipeline.parameters.cache_version >>-build-<< parameters.os >>-{{ checksum "Cargo.lock" }}
+            - rust-cargo-<< pipeline.parameters.cache_version >>-build-<< parameters.os >>-{{ checksum ".tool-versions" }}-{{ checksum "Cargo.lock" }}
             - rust-cargo-<< pipeline.parameters.cache_version >>-build-<< parameters.os >>
       - run: cargo xtask lint
 
@@ -229,7 +229,7 @@ commands:
       - restore_cache:
           name: Restore .cargo
           keys:
-            - rust-cargo-<< pipeline.parameters.cache_version >>-build-<< parameters.os >>-{{ checksum "Cargo.lock" }}
+            - rust-cargo-<< pipeline.parameters.cache_version >>-build-<< parameters.os >>-{{ checksum ".tool-versions" }}-{{ checksum "Cargo.lock" }}
             - rust-cargo-<< pipeline.parameters.cache_version >>-build-<< parameters.os >>
       - install_extra_tools:
           os: << parameters.os >>
@@ -258,12 +258,12 @@ commands:
       - restore_cache:
           name: Restore .cargo
           keys:
-            - rust-cargo-<< pipeline.parameters.cache_version >>-build-<< parameters.os >>-{{ checksum "Cargo.lock" }}
+            - rust-cargo-<< pipeline.parameters.cache_version >>-build-<< parameters.os >>-{{ checksum ".tool-versions" }}-{{ checksum "Cargo.lock" }}
             - rust-cargo-<< pipeline.parameters.cache_version >>-build-<< parameters.os >>
       - build_all_permutations
       - save_cache:
           name: Save .cargo
-          key: rust-cargo-<< pipeline.parameters.cache_version >>-build-<< parameters.os >>-{{ checksum "Cargo.lock" }}
+          key: rust-cargo-<< pipeline.parameters.cache_version >>-build-<< parameters.os >>-{{ checksum ".tool-versions" }}-{{ checksum "Cargo.lock" }}
           paths:
             - ~/.cargo
 
@@ -272,12 +272,12 @@ commands:
       - restore_cache:
           name: Restore .cargo
           keys:
-            - rust-cargo-<< pipeline.parameters.cache_version >>-build-windows-{{ checksum "Cargo.lock" }}
+            - rust-cargo-<< pipeline.parameters.cache_version >>-build-windows-{{ checksum ".tool-versions" }}-{{ checksum "Cargo.lock" }}
             - rust-cargo-<< pipeline.parameters.cache_version >>-build-windows
       - build_common_permutations
       - save_cache:
           name: Save .cargo
-          key: rust-cargo-<< pipeline.parameters.cache_version >>-build-windows-{{ checksum "Cargo.lock" }}
+          key: rust-cargo-<< pipeline.parameters.cache_version >>-build-windows-{{ checksum ".tool-versions" }}-{{ checksum "Cargo.lock" }}
           paths:
             - C:\\Users\\circleci\.cargo
 
@@ -290,12 +290,12 @@ commands:
       - restore_cache:
           name: Restore .cargo
           keys:
-            - rust-cargo-<< pipeline.parameters.cache_version >>-test-windows-{{ checksum "Cargo.lock" }}
+            - rust-cargo-<< pipeline.parameters.cache_version >>-test-windows-{{ checksum ".tool-versions" }}-{{ checksum "Cargo.lock" }}
             - rust-cargo-<< pipeline.parameters.cache_version >>-test-windows
       - run: cargo test --locked
       - save_cache:
           name: Save .cargo
-          key: rust-cargo-<< pipeline.parameters.cache_version >>-test-windows-{{ checksum "Cargo.lock" }}
+          key: rust-cargo-<< pipeline.parameters.cache_version >>-test-windows-{{ checksum ".tool-versions" }}-{{ checksum "Cargo.lock" }}
           paths:
             - C:\\Users\\circleci\.cargo
 
@@ -311,7 +311,7 @@ commands:
       - restore_cache:
           name: Restore .cargo
           keys:
-            - rust-cargo-<< pipeline.parameters.cache_version >>-test-<< parameters.os >>-{{ checksum "Cargo.lock" }}
+            - rust-cargo-<< pipeline.parameters.cache_version >>-test-<< parameters.os >>-{{ checksum ".tool-versions" }}-{{ checksum "Cargo.lock" }}
             - rust-cargo-<< pipeline.parameters.cache_version >>-test-<< parameters.os >>
 
       # As of rustc 1.61.0, must limit the number of linux jobs or we run out of memory (large executor/8GB)
@@ -328,7 +328,7 @@ commands:
 
       - save_cache:
           name: Save .cargo
-          key: rust-cargo-<< pipeline.parameters.cache_version >>-test-<< parameters.os >>-{{ checksum "Cargo.lock" }}
+          key: rust-cargo-<< pipeline.parameters.cache_version >>-test-<< parameters.os >>-{{ checksum ".tool-versions" }}-{{ checksum "Cargo.lock" }}
           paths:
             - ~/.cargo
 
