@@ -1,5 +1,6 @@
 //! Axum http server factory. Axum provides routing capability on top of Hyper HTTP.
 use std::collections::HashMap;
+use std::env;
 use std::pin::Pin;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -32,6 +33,7 @@ use hyper::Body;
 use opentelemetry::global;
 use opentelemetry::trace::SpanKind;
 use opentelemetry::trace::TraceContextExt;
+use regex::Regex;
 use serde_json::json;
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpListener;
@@ -163,6 +165,7 @@ impl HttpServerFactory for AxumHttpServerFactory {
                 .route(&configuration.server.health_check_path, get(health_check))
                 .layer(Extension(service_factory))
                 .layer(cors)
+                .layer(middleware::from_fn(base_cors))
                 .layer(CompressionLayer::new()); // To compress response body
 
             for (plugin_name, handler) in plugin_handlers {
@@ -552,6 +555,64 @@ fn prefers_html(accept_header: &HeaderValue) -> bool {
                 .any(|a| a == "text/html")
         })
         .unwrap_or_default()
+}
+
+async fn base_cors(
+    req: Request<Body>,
+    next: Next<Body>,
+) -> Result<Response, Response> {
+    let headers = req.headers();
+    let origin_header = headers.get("origin");
+    match origin_header {
+        Some(origin) => {
+            let header_val = origin.clone();
+            let is_match = check_cors_match(origin);
+            if is_match {
+                let mut res = next.run(req).await;
+                let res_headers = res.headers_mut();
+                res_headers.insert("access-control-allow-origin", header_val);
+                return Ok(res);
+            }
+        },
+        None => (),
+    }
+
+    Ok(next.run(req).await)
+}
+
+fn check_cors_match(header: &HeaderValue) -> bool {
+    let base_cors_domains = env::var("ALLOWED_DOMAINS");
+    match base_cors_domains {
+        Ok(raw) => {
+            let domains = raw.split(",");
+            for domain in domains {
+                let result = Regex::new(format!("^(.*)?{}(:\\d+)?$", domain.replace(".", "\\.")).as_str());
+                match result {
+                    Ok(regexp) => {
+                        let result = header.to_str();
+                        match result {
+                            Ok(header_str) => {
+                                tracing::debug!(?regexp, domain, header_str, "Checking CORS base domain match");
+                                if regexp.is_match(header_str) {
+                                    return true;
+                                }
+                            },
+                            Err(err) => {
+                                tracing::error!(?err, "Failed to convert header to &str");
+                            }
+                        }
+                    },
+                    Err(err) => {
+                        tracing::error!(?err, "Failed to create Regex");
+                    },
+                }
+            }
+        },
+        Err(err) => {
+            tracing::debug!(?err, "Failed to load ALLOWED_DOMAINS");
+        },
+    }
+    false
 }
 
 async fn decompress_request_body(
